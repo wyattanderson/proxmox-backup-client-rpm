@@ -1,5 +1,15 @@
 # Dbgsym Registry Experiment
 
+This directory is retained as historical context.
+
+The supported workflow now lives in:
+
+- `scripts/prepare-dbgsym-registry.py`
+- `scripts/build-target-binaries.sh`
+- `./all.sh`
+
+See the repository root `README.md` for the current RHEL 9 build process.
+
 This experiment explores whether the published `proxmox-backup-client-dbgsym`
 package contains enough Rust debug information to reconstruct a close-enough
 crate source layout for building `proxmox-backup-client` on RHEL 9.
