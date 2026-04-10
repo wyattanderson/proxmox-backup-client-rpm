@@ -1,0 +1,14 @@
+diff --git a/src/glue.c b/src/glue.c
+index d5e5a50..851d38a 100644
+--- a/src/glue.c
++++ b/src/glue.c
+@@ -19,4 +19,9 @@ MAKE_ACCESSORS(flush)
+ MAKE_ACCESSORS(nonseekable)
+ MAKE_ACCESSORS(flock_release)
+ MAKE_ACCESSORS(cache_readdir)
++#if FUSE_MAKE_VERSION(FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION) >= FUSE_MAKE_VERSION(3, 12)
+ MAKE_ACCESSORS(noflush)
++#else
++extern void glue_set_ffi_noflush(struct fuse_file_info *ffi, unsigned int value) { (void)ffi; (void)value; }
++extern unsigned int glue_get_ffi_noflush(struct fuse_file_info *ffi) { (void)ffi; return 0; }
++#endif

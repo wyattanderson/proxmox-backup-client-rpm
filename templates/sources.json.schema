@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/proxmox-backup-client-rpm/sources.schema.json",
+  "title": "Proxmox Backup Bootstrap Manifest",
+  "type": "object",
+  "required": [
+    "archive_indexes",
+    "bootstrap_timestamp_utc",
+    "resolved_crates",
+    "tag",
+    "upstream_commit",
+    "upstream_url",
+    "vendor_entries"
+  ],
+  "properties": {
+    "archive_indexes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bootstrap_timestamp_utc": {
+      "type": "string"
+    },
+    "resolved_crates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "crate",
+          "version"
+        ],
+        "properties": {
+          "crate": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "tag": {
+      "type": "string"
+    },
+    "upstream_commit": {
+      "type": "string"
+    },
+    "upstream_url": {
+      "type": "string"
+    },
+    "vendor_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "archive_url",
+          "crate",
+          "crate_dir",
+          "deb_filename",
+          "package",
+          "package_version",
+          "version"
+        ],
+        "properties": {
+          "archive_url": {
+            "type": "string"
+          },
+          "crate": {
+            "type": "string"
+          },
+          "crate_dir": {
+            "type": "string"
+          },
+          "deb_filename": {
+            "type": "string"
+          },
+          "package": {
+            "type": "string"
+          },
+          "package_version": {
+            "type": "string"
+          },
+          "path_in_vcs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_index": {
+            "type": "string"
+          },
+          "vcs_commit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
