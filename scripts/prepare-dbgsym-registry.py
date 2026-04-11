@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 import urllib.request
 from pathlib import Path
+from urllib.error import URLError
 
 
 DEFAULT_PACKAGE_INDEXES = [
@@ -329,11 +330,36 @@ def fetch_packages(packages_url: str) -> list[dict[str, str]]:
     return parse_packages_index(gzip.decompress(compressed).decode("utf-8"))
 
 
-def load_candidate_packages(indexes: list[str]) -> dict[tuple[str, str], dict[str, str]]:
+def load_candidate_packages_from_downloads(downloads_dir: Path) -> dict[tuple[str, str], dict[str, str]]:
     candidates: dict[tuple[str, str], dict[str, str]] = {}
+    for deb_path in sorted(downloads_dir.glob("*.deb")):
+        name, sep, remainder = deb_path.name.partition("_")
+        if not sep or not remainder.endswith(".deb"):
+            continue
+        version = remainder[:-4].rsplit("_", 1)[0]
+        if not name.startswith(("rust-", "librust-")) or not version:
+            continue
+        candidates[(name, version)] = {
+            "package": name,
+            "source": "",
+            "version": version,
+            "filename": deb_path.name,
+            "url": deb_path.as_uri(),
+        }
+    return candidates
+
+
+def load_candidate_packages(indexes: list[str], downloads_dir: Path) -> dict[tuple[str, str], dict[str, str]]:
+    candidates: dict[tuple[str, str], dict[str, str]] = {}
+    candidates.update(load_candidate_packages_from_downloads(downloads_dir))
     for index_url in indexes:
         base_url = index_url.rsplit("/", 1)[0] + "/"
-        for pkg in fetch_packages(index_url):
+        try:
+            packages = fetch_packages(index_url)
+        except URLError as exc:
+            print(f"warning: unable to fetch {index_url}: {exc}", flush=True)
+            continue
+        for pkg in packages:
             package_name = pkg.get("Package", "")
             filename = pkg.get("Filename", "")
             version = pkg.get("Version", "")
@@ -556,7 +582,7 @@ def main() -> int:
     state_dir = args.state_dir.resolve()
     registry_dir = args.registry_dir.resolve()
     package_indexes = args.packages_indexes or DEFAULT_PACKAGE_INDEXES
-    candidates = load_candidate_packages(package_indexes)
+    candidates = load_candidate_packages(package_indexes, args.downloads_dir.resolve())
 
     state_dir.mkdir(parents=True, exist_ok=True)
     downloads_dir.mkdir(parents=True, exist_ok=True)

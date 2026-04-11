@@ -61,6 +61,42 @@ Built binaries end up under:
 - `state/dbgsym-registry/proxmox-backup-src/target/release/proxmox-backup-client`
 - `state/dbgsym-registry/proxmox-backup-src/target/release/pxar`
 
+## SRPM Workflow
+
+For COPR and other RPM builders, the build needs to be offline at `%build`
+time. The packaging flow therefore prepares the full Cargo workspace before
+`rpmbuild`, so the RPM build only needs to run `cargo build`.
+
+The supported SRPM helpers are:
+
+- `scripts/prepare-srpm-sources.py`
+- `scripts/build-srpm.sh`
+
+`scripts/prepare-srpm-sources.py` does the networked prep step once on the
+packager machine:
+
+1. Run `scripts/prepare-dbgsym-registry.py` to compute the final crate lock and
+   exact Proxmox crate set.
+2. Create `proxmox-backup-4.1.5.tar.gz` from the upstream checkout.
+3. Expand that source tree and bake in:
+   - the extracted and patched Proxmox crate sources under `vendor/proxmox-registry/`
+   - a generated `Cargo.lock`
+   - a vendored crates.io tree under `vendor/cargo/`
+   - a repo-local `.cargo/config.toml` that points Cargo at both of those trees
+   - generated metadata under `.rpm-metadata/`
+4. Create `proxmox-backup-prepared-4.1.5.tar.gz`
+
+`scripts/build-srpm.sh` then populates an `rpmbuild` tree, copies the spec, and
+runs:
+
+```bash
+rpmbuild -bs --define "_topdir ..."
+```
+
+Inside the RPM build, the spec now just unpacks the prepared tree and runs
+`cargo build --locked` for `proxmox-backup-client` and `pxar`. It does not run
+the registry reconstruction helpers during `%build`.
+
 ## Why The Registry Is Staged Twice
 
 The two-stage preparation is intentional and is now codified in
