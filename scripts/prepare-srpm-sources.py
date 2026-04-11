@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -20,6 +21,19 @@ PREPARED_ROOT_PREFIX = "proxmox-backup-prepared"
 PROXMOX_REGISTRY_SUBDIR = Path("vendor/proxmox-registry")
 CRATES_IO_VENDOR_SUBDIR = Path("vendor/cargo")
 METADATA_SUBDIR = Path(".rpm-metadata")
+PRUNE_TOP_LEVEL_DIRS = (
+    Path("docs"),
+    Path("etc"),
+    Path("examples"),
+    Path("templates"),
+    Path("tests"),
+    Path("www"),
+)
+PRUNE_PATH_SOURCE_SUBDIRS = ("benches", "examples", "test", "tests")
+PRUNE_CARGO_SUPPORT_CRATES = (
+    "winapi-i686-pc-windows-gnu-0.4.0",
+    "winapi-x86_64-pc-windows-gnu-0.4.0",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -205,6 +219,55 @@ def vendor_cargo_dependencies(source_tree: Path, vendor_dir: Path) -> None:
         check=True,
         stdout=subprocess.DEVNULL,
     )
+    if cargo_home.exists():
+        shutil.rmtree(cargo_home)
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def rewrite_cargo_checksum(crate_dir: Path) -> None:
+    checksum_path = crate_dir / ".cargo-checksum.json"
+    payload = json.loads(checksum_path.read_text(encoding="utf-8"))
+    payload["files"] = {
+        file_path.relative_to(crate_dir).as_posix(): sha256_file(file_path)
+        for file_path in sorted(crate_dir.rglob("*"))
+        if file_path.is_file() and file_path.name != checksum_path.name
+    }
+    checksum_path.write_text(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
+    )
+
+
+def prune_prepared_tree(prepared_tree: Path) -> None:
+    for relpath in PRUNE_TOP_LEVEL_DIRS:
+        target = prepared_tree / relpath
+        if target.is_dir():
+            shutil.rmtree(target)
+
+    registry_dir = prepared_tree / PROXMOX_REGISTRY_SUBDIR
+    for crate_dir in sorted(registry_dir.iterdir()):
+        if not crate_dir.is_dir():
+            continue
+        for subdir_name in PRUNE_PATH_SOURCE_SUBDIRS:
+            target = crate_dir / subdir_name
+            if target.is_dir():
+                shutil.rmtree(target)
+
+    cargo_vendor_dir = prepared_tree / CRATES_IO_VENDOR_SUBDIR
+    for crate_name in PRUNE_CARGO_SUPPORT_CRATES:
+        crate_dir = cargo_vendor_dir / crate_name
+        lib_dir = crate_dir / "lib"
+        if not lib_dir.is_dir():
+            continue
+        shutil.rmtree(lib_dir)
+        rewrite_cargo_checksum(crate_dir)
 
 
 def prepare_source_tree(
@@ -250,6 +313,7 @@ def prepare_source_tree(
 
     vendor_cargo_dependencies(prepared_tree, prepared_tree / CRATES_IO_VENDOR_SUBDIR)
     write_cargo_config(prepared_tree, repoid)
+    prune_prepared_tree(prepared_tree)
     return prepared_tree
 
 
