@@ -3,17 +3,20 @@
 %global _debugsource_packages 0
 
 Name:           proxmox-backup-client
-Version:        4.1.5
+Version:        4.1.8
 Release:        1%{?dist}
 Summary:        Client for Proxmox Backup Server
-License:        AGPL-3.0-only
+License:        AGPL-3.0-or-later
 URL:            https://www.proxmox.com/en/proxmox-backup-server
+BugURL:         https://github.com/wyattanderson/proxmox-backup-client-rpm
+Packager:       Wyatt Anderson <wanderson@gmail.com>
 ExclusiveArch:  x86_64
 Source0:        %{prepared_name}-%{version}.tar.gz
 
 BuildRequires:  bash
 BuildRequires:  cargo
 BuildRequires:  gcc
+BuildRequires:  pkgconf
 BuildRequires:  rust
 BuildRequires:  pkgconfig(fuse3)
 BuildRequires:  pkgconfig(libacl)
