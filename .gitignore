@@ -2,4 +2,3 @@ scripts/__pycache__/
 state/*
 dist/*
 downloads/*
-!state/.gitignore
