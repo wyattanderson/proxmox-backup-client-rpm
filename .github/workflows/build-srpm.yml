@@ -1,0 +1,36 @@
+name: Build SRPM
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-srpm:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/centos/centos:stream9
+    permissions:
+      contents: write
+    steps:
+      - name: Install git
+        run: dnf install -y --setopt=install_weak_deps=False git
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: dnf install -y --setopt=install_weak_deps=False rpm-build python3 curl
+
+      - name: Build SRPM
+        run: bash scripts/build-srpm.sh
+
+      - name: Locate SRPM
+        id: srpm
+        run: echo "path=$(find dist/rpmbuild/SRPMS -name '*.src.rpm')" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.srpm.outputs.path }}
