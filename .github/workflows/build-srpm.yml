@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install build dependencies
-        run: dnf install -y --setopt=install_weak_deps=False rpm-build python3 curl
+        run: dnf install -y --setopt=install_weak_deps=False rpm-build python3 
 
       - name: Build SRPM
         run: bash scripts/build-srpm.sh
