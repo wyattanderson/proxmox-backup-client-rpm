@@ -13,15 +13,15 @@ checkout="${repo_root}/state/dbgsym-registry/proxmox-backup-src"
 
 mkdir -p "${sources_dir}" "${specs_dir}" "${srpms_dir}" "${work_dir}" "${downloads_dir}" "$(dirname "${checkout}")"
 
-dbgsym_deb="${downloads_dir}/proxmox-backup-client-dbgsym_4.1.8-1_amd64.deb"
+dbgsym_deb="${downloads_dir}/proxmox-backup-client-dbgsym_4.2.0-1_amd64.deb"
 
 if [[ ! -f "${dbgsym_deb}" ]]; then
     curl -LfsS -o "${dbgsym_deb}" \
-      http://download.proxmox.com/debian/pbs/dists/trixie/pbs-no-subscription/binary-amd64/proxmox-backup-client-dbgsym_4.1.8-1_amd64.deb
+      http://download.proxmox.com/debian/pbs/dists/trixie/pbs-no-subscription/binary-amd64/proxmox-backup-client-dbgsym_4.2.0-1_amd64.deb
 fi
 
 if [[ ! -d "${checkout}" ]]; then
-    git clone --depth 1 --branch v4.1.8 \
+    git clone --depth 1 --branch v4.2.0 \
       git://git.proxmox.com/git/proxmox-backup.git \
       "${checkout}"
 fi
