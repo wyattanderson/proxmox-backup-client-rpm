@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-repo_root=$(realpath "$(dirname "$0")/..")
+repo_root=$(git rev-parse --show-toplevel)
+git_tag=$(git -C "${repo_root}" describe --tags --abbrev=0)
+version="${git_tag#v}"
 topdir="${1:-${repo_root}/dist/rpmbuild}"
 sources_dir="${topdir}/SOURCES"
 specs_dir="${topdir}/SPECS"
@@ -13,15 +15,15 @@ checkout="${repo_root}/state/dbgsym-registry/proxmox-backup-src"
 
 mkdir -p "${sources_dir}" "${specs_dir}" "${srpms_dir}" "${work_dir}" "${downloads_dir}" "$(dirname "${checkout}")"
 
-dbgsym_deb="${downloads_dir}/proxmox-backup-client-dbgsym_4.2.0-1_amd64.deb"
+dbgsym_deb="${downloads_dir}/proxmox-backup-client-dbgsym_${version}-1_amd64.deb"
 
 if [[ ! -f "${dbgsym_deb}" ]]; then
     curl -LfsS -o "${dbgsym_deb}" \
-      http://download.proxmox.com/debian/pbs/dists/trixie/pbs-no-subscription/binary-amd64/proxmox-backup-client-dbgsym_4.2.0-1_amd64.deb
+      "http://download.proxmox.com/debian/pbs/dists/trixie/pbs-no-subscription/binary-amd64/proxmox-backup-client-dbgsym_${version}-1_amd64.deb"
 fi
 
 if [[ ! -d "${checkout}" ]]; then
-    git clone --depth 1 --branch v4.2.0 \
+    git clone --depth 1 --branch "${git_tag}" \
       git://git.proxmox.com/git/proxmox-backup.git \
       "${checkout}"
 fi
@@ -38,5 +40,6 @@ cp "${repo_root}/proxmox-backup-client.spec" "${specs_dir}/"
 
 rpmbuild -bs \
   --define "_topdir ${topdir}" \
+  --define "upstream_version ${version}" \
   --undefine dist \
   "${specs_dir}/proxmox-backup-client.spec"

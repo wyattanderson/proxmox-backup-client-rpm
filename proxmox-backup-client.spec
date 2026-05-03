@@ -3,7 +3,7 @@
 %global _debugsource_packages 0
 
 Name:           proxmox-backup-client
-Version:        4.2.0
+Version:        %{upstream_version}
 Release:        1%{?dist}
 Summary:        Client for Proxmox Backup Server
 License:        AGPL-3.0-or-later
